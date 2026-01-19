@@ -71,8 +71,8 @@ This project uses **`uv`** for lightning-fast dependency management.
 
 1. **Clone the Repository:**
 ```bash
-git clone https://github.com/your-username/airqo-pm25-pipeline.git
-cd airqo-pm25-pipeline
+git clone https://github.com/Ibraheem-Al-hafith/airqo_pipeline.git
+cd airqo_pipeline
 
 ```
 

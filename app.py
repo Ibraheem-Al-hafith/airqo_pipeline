@@ -188,6 +188,8 @@ def main() -> None:
                     # Save temporary file
                     file_name = "user_input.csv"
                     file_dir = Config.TEST_DATA_PATH.parent / file_name
+                    if not Config.TEST_DATA_PATH.exists():
+                        Config.TEST_DATA_PATH.mkdir(parents=True)
                     df.to_csv(file_dir, index=False)
                     
                     # Run Pipeline
