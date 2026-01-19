@@ -1,10 +1,12 @@
+import itertools
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from typing import Tuple
 from src.config import Config
+from pathlib import Path
 
-def load_data(path: str) -> pd.DataFrame:
+def load_data(path: str|Path) -> pd.DataFrame:
     """Loads CSV data."""
     try:
         df = pd.read_csv(path)
@@ -21,19 +23,42 @@ def clean_target_outliers(df: pd.DataFrame) -> pd.DataFrame:
     print(f"🧹 Removed {initial_len - len(df_clean)} target outliers.")
     return df_clean
 
-def get_train_val_split() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+def get_X_y_folds() -> Tuple[pd.DataFrame, pd.Series, dict]:
     """Loads, cleans, and splits data into X_train, X_val, y_train, y_val."""
     df = load_data(Config.RAW_DATA_PATH)
     
     # Basic cleaning
     df = clean_target_outliers(df)
     
+    folds = get_train_val_folds(df)
+
     X = df.drop(columns=[Config.TARGET])
     y = df[Config.TARGET]
     
-    # Split
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=Config.TEST_SIZE, random_state=Config.RANDOM_STATE
-    )
-    
-    return X_train, X_val, y_train, y_val
+    return X, y, folds
+
+def get_train_val_folds(X):
+    """Custom cross validation method (split data by cities)"""
+    unique_cities = X['city'].unique()
+    folds = {}
+    for i, cities in enumerate(get_all_combinations(unique_cities.tolist())):
+        if len(X[X['city'].isin(cities)].index.values) < len(X[~ X['city'].isin(cities)].index.values):
+            continue
+        folds[i] = (X[X['city'].isin(cities)].index.values, X[~ X['city'].isin(cities)].index.values)
+        assert len(folds[i][0])+len(folds[i][1]) == len(X), f"Shape mismatch, got {len(folds[i][0])} and {folds[i][1]} \n X length :{len(X)}"
+        # print(cities)
+    return folds
+
+
+def get_all_combinations(input_list):
+    """
+    Generates all possible combinations (subsets) of a given list,
+    including an empty set.
+    """
+    all_combinations = []
+    for r in range(1, len(input_list)):
+        # Generate combinations of length 'r'
+        combinations_r = list(itertools.combinations(input_list, r))
+        all_combinations.extend(combinations_r)
+    return all_combinations
+

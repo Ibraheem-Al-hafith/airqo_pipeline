@@ -12,7 +12,7 @@ class Config:
     MLFLOW_URI = f"file://{BASE_DIR / 'models' / 'mlruns'}"
 
     #Experiment configs:
-    EXPERIMENT_NAME: str = "decision_tree_trial"
+    EXPERIMENT_NAME: str = "lightgbm"
 
     # Data Config
     TARGET = "pm2_5"
@@ -25,10 +25,8 @@ class Config:
     MISSING_THRESH = 60.0  # Percent
     
     # Model Config
-    MODEL: str = 'decision_tree' # supported models: lgbm, xgboost, random_forest, decision_tree
+    MODEL: str = 'lgbm' # supported models: lgbm, xgboost, random_forest, decision_tree
     RANDOM_STATE = 42
-    TEST_SIZE = 0.2
-    CV_FOLDS = 5
     N_JOBS = -1
     
     # Features derived from EDA

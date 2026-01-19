@@ -66,7 +66,7 @@ def evaluate_metrics(y_true, y_pred):
         "mae": mean_absolute_error(y_true, y_pred)
     }
 
-def train_workflow(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFrame, y_val: pd.Series):
+def train_workflow(X: pd.DataFrame, y: pd.Series, folds: dict):
     """Executes the training workflow with MLflow tracking."""
     
     mlflow.set_tracking_uri(Config.MLFLOW_URI)
@@ -80,11 +80,11 @@ def train_workflow(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFram
     cols_to_drop = Config.DROP_COLS + [Config.ID_COL]
     
     # Filter features passed to pipeline
-    train_cols = [c for c in X_train.columns if c not in cols_to_drop and c != Config.DATE_COL]
+    train_cols = [c for c in X.columns if c not in cols_to_drop and c != Config.DATE_COL]
     
     # Define categorical/numeric based on raw input (Date is handled by transformer)
-    cat_cols = X_train[train_cols].select_dtypes(include=['object']).columns.tolist()
-    num_cols = X_train[train_cols].select_dtypes(include=['number']).columns.tolist()
+    cat_cols = X[train_cols].select_dtypes(include=['object']).columns.tolist()
+    num_cols = X[train_cols].select_dtypes(include=['number']).columns.tolist()
     
     # Add generated time columns to numeric list (anticipating transformation)
     # In a complex pipeline, we often use `sklearn-pandas` or custom selectors. 
@@ -99,23 +99,38 @@ def train_workflow(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFram
     
     print("🚀 Starting Training...")
     with mlflow.start_run(run_name=Config.EXPERIMENT_NAME):
-        # Fit
-        pipeline.fit(X_train, y_train)
-        
-        # Predict
-        y_pred = pipeline.predict(X_val)
         
         # Evaluate
-        metrics = evaluate_metrics(y_val, y_pred)
+        metrics = run_cross_validation(pipeline, X, y, folds)
         
         # Log
         mlflow.log_params(pipeline.named_steps['regressor'].get_params())
         mlflow.log_metrics(metrics)
         
         # Save Artifacts
-        model_path = Config.MODEL_DIR / Config.MODEL/ "final_pipeline.pkl"
+        model_path = Config.MODEL_DIR / "final_pipeline.pkl"
         joblib.dump(pipeline, model_path)
         mlflow.sklearn.log_model(pipeline, Config.MODEL)
         
         print(f"✅ Training Complete. Metrics: {metrics}")
         print(f"💾 Model saved to {model_path}")
+
+
+def run_cross_validation(pipeline, X, y, folds):
+    all_metrics = []
+    val_weights = []
+
+    for fold, (train_idx, val_idx) in folds.items():
+        X_train, X_test = X.iloc[train_idx,:], X.iloc[val_idx, :]
+        y_train, y_test = y.iloc[train_idx], y.iloc[val_idx]
+
+        pipeline.fit(X_train, y_train)
+        y_pred = pipeline.predict(X_test)
+        metrics = evaluate_metrics(y_pred=y_pred, y_true=y_test)
+        all_metrics.append(metrics)
+        val_weights.append(len(val_idx))
+    
+    all_metrics = np.average(pd.DataFrame(all_metrics), axis=0, weights=val_weights)
+    return {
+        key:all_metrics[i] for key, i in zip(metrics.keys(), range(len(all_metrics)))
+    }
