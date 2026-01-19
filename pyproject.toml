@@ -6,10 +6,13 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "argparse>=1.4.0",
+    "catboost>=1.2.8",
     "joblib>=1.5.3",
     "lightgbm>=4.6.0",
     "mlflow>=3.8.1",
     "numpy>=2.4.1",
     "pandas>=2.3.3",
     "scikit-learn>=1.8.0",
+    "streamlit>=1.53.0",
+    "xgboost>=3.1.3",
 ]
