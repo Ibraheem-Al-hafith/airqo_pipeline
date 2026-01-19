@@ -6,13 +6,24 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import RobustScaler, OneHotEncoder
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
 from src.config import Config
 from src.features.transformers import TimeFeatureExtractor, OutlierHandler
 
 from lightgbm import LGBMRegressor
+from xgboost import XGBRegressor
+from catboost import CatBoostRegressor
+
+MODEL_MAPPER = {
+    "lgbm": LGBMRegressor(verbose = -1, random_state=Config.RANDOM_STATE),
+    "decision_tree": DecisionTreeRegressor(random_state=Config.RANDOM_STATE),
+    "random_forest": RandomForestRegressor(random_state=Config.RANDOM_STATE),
+    "xgboost": XGBRegressor(random_state = Config.RANDOM_STATE),
+    "catboost": CatBoostRegressor(random_state=Config.RANDOM_STATE, verbose=0)
+}
 
 def build_pipeline(cat_cols: list, num_cols: list) -> Pipeline:
     """Constructs the processing and modeling pipeline."""
@@ -43,7 +54,7 @@ def build_pipeline(cat_cols: list, num_cols: list) -> Pipeline:
     pipeline = Pipeline([
         ('feature_eng', feature_engineering),
         ('preprocessor', preprocessor),
-        ('regressor', LGBMRegressor(random_state=Config.RANDOM_STATE))
+        ('regressor', MODEL_MAPPER[Config.MODEL])
     ])
     
     return pipeline
@@ -59,7 +70,7 @@ def train_workflow(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFram
     """Executes the training workflow with MLflow tracking."""
     
     mlflow.set_tracking_uri(Config.MLFLOW_URI)
-    mlflow.set_experiment("AirQo_PM25_Production")
+    mlflow.set_experiment(Config.EXPERIMENT_NAME)
     
     # Identify column types DYNAMICALLY after basic cleaning
     # Note: We need to handle the fact that TimeExtractor changes columns.
@@ -87,7 +98,7 @@ def train_workflow(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFram
     pipeline = build_pipeline(cat_cols, num_cols)
     
     print("🚀 Starting Training...")
-    with mlflow.start_run():
+    with mlflow.start_run(run_name=Config.EXPERIMENT_NAME):
         # Fit
         pipeline.fit(X_train, y_train)
         
@@ -102,9 +113,9 @@ def train_workflow(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFram
         mlflow.log_metrics(metrics)
         
         # Save Artifacts
-        model_path = Config.MODEL_DIR / "final_pipeline.pkl"
+        model_path = Config.MODEL_DIR / Config.MODEL/ "final_pipeline.pkl"
         joblib.dump(pipeline, model_path)
-        mlflow.sklearn.log_model(pipeline, "model")
+        mlflow.sklearn.log_model(pipeline, Config.MODEL)
         
         print(f"✅ Training Complete. Metrics: {metrics}")
         print(f"💾 Model saved to {model_path}")
