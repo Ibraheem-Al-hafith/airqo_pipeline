@@ -144,7 +144,7 @@ st.set_page_config(
 def main() -> None:
     # --- SIDEBAR ---
     with st.sidebar:
-        st.image("https://airqo.africa/static/img/airqo-logo.png", width=150) # Assuming AirQo logo URL
+        st.image("assets/app_logo.png") # Assuming AirQo logo URL
         st.title("⚙️ Settings & Info")
         st.info(f"**Current Model:** {Config.MODEL.upper()}")
         st.write("---")

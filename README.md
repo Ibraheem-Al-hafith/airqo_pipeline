@@ -2,6 +2,11 @@
 
 A professional, modular, and production-ready machine learning pipeline designed to forecast **Particulate Matter (PM2.5)** concentrations across African cities using satellite-derived observations (AOD).
 
+
+---
+
+<img src = 'assets/logo.png'>
+
 ---
 
 ## 🎯 Project Overview
