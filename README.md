@@ -132,6 +132,11 @@ uv run python -m streamlit run app.py
 ```
 
 ---
+## 📺 Demo Video 📺 :
+
+https://github.com/user-attachments/assets/a6be4afe-3c12-483f-a1b7-08e8922b6a0c
+
+---
 
 ## 📊 Model Performance
 
