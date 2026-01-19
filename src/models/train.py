@@ -107,6 +107,8 @@ def train_workflow(X: pd.DataFrame, y: pd.Series, folds: dict):
         mlflow.log_params(pipeline.named_steps['regressor'].get_params())
         mlflow.log_metrics(metrics)
         
+        #train the pipeline on the full dataset:
+        pipeline.fit(X, y)
         # Save Artifacts
         model_path = Config.MODEL_DIR / "final_pipeline.pkl"
         joblib.dump(pipeline, model_path)
