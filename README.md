@@ -1,75 +1,147 @@
-# AirQo PM2.5 Prediction Pipeline 🌍
+# 🌍 AirQo PM2.5 Prediction: Production ML Pipeline
 
-A production-ready machine learning pipeline for forecasting Particulate Matter (PM2.5) air quality. This project transitions experimental notebooks into a modular, reproducible MLOps architecture using Scikit-Learn pipelines and MLflow.
+A professional, modular, and production-ready machine learning pipeline designed to forecast **Particulate Matter (PM2.5)** concentrations across African cities using satellite-derived observations (AOD).
 
-## 🏗 Architecture
+---
 
-The project follows a component-based architecture:
-* **`src/data`**: Ingestion, cleaning, and schema validation.
-* **`src/features`**: Custom Scikit-learn transformers (`TimeFeatureExtractor`, `OutlierHandler`).
-* **`src/models`**: Training workflows, cross-validation, and hyperparameter tracking.
-* **`src/inference`**: Automated prediction generation compatible with submission formats.
+## 🎯 Project Overview
 
-## ⚙️ Setup
+Air pollution is a critical environmental health risk in sub-Saharan Africa. This project implements a robust MLOps workflow to close the climate data gap by leveraging satellite data and high-performance regression models.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repo_url>
-    cd airqo_ml_pipeline
-    ```
+### ✨ Key Features
 
-2.  **Install Dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+* **🏗️ Modular Architecture**: Clean separation between data ingestion, feature engineering, training, and inference.
+* **🧪 Experiment Tracking**: Full integration with **MLflow** to log parameters, metrics, and models.
+* **📉 Custom Transformers**: Advanced feature engineering including `TimeFeatureExtractor` and `OutlierHandler` with full Scikit-Learn pipeline compatibility.
+* **🚀 One-Click Inference**: A sleek **Streamlit GUI** for end-users to upload data and download predictions.
+* **🛡️ Robust Validation**: Custom City-based Cross-Validation to ensure spatial generalization.
 
-3.  **Data Placement:**
-    Place `Train.csv` and `Test.csv` inside `data/raw/`.
+---
+
+
+### 🧰 Tech Stack & Tools 🛠️ 
+
+| Category | Tools & Technologies |
+| :--- | :--- |
+| **Core** | ![Python](https://img.shields.io/badge/-Python-3776AB?style=flat-square&logo=python&logoColor=white) |
+| **Data Processing** | ![Pandas](https://img.shields.io/badge/-Pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![NumPy](https://img.shields.io/badge/-NumPy-013243?style=flat-square&logo=numpy) |
+| **Machine Learning** | ![ScikitLearn](https://img.shields.io/badge/-Scikit--Learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white) |
+| **Experiment Tracking** | ![MLflow](https://img.shields.io/badge/-MLflow-0194E2?style=flat-square&logo=mlflow&logoColor=white) |
+| **Visualization** | ![Matplotlib](https://img.shields.io/badge/-Matplotlib-11557C?style=flat-square&logo=python&logoColor=white) ![Seaborn](https://img.shields.io/badge/-Seaborn-4C72B0?style=flat-square&logo=python&logoColor=white) |
+| **Web App** | ![Streamlit](https://img.shields.io/badge/-Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white) |
+| **CLI & Utilities** | ![Argparse](https://img.shields.io/badge/-Argparse-3776AB?style=flat-square&logo=python&logoColor=white) |
+
+
+---
+
+## 📂 Project Structure
+
+```bash
+airqo_pipeline/
+├── data/                   # Raw and output datasets
+│   ├── raw/          
+│   └── output/
+├── models/
+│   ├── artifacts/          # Serialized .pkl pipelines
+│   └── mlruns/             # MLflow local tracking database
+├── notebooks/              # Research and EDA notebooks
+├── reports/
+│   └── figures/            # Automatically generated performance plots
+├── src/                    # Core source code
+│   ├── config.py           # Centralized configuration & Hyperparameters
+│   ├── data/               # Ingestion and cleaning logic
+│   ├── features/           # Custom Scikit-learn transformers
+│   ├── models/             # Training and evaluation workflows
+│   └── inference/          # Prediction scripts
+├── app.py                  # Streamlit Dashboard
+└── main.py                 # CLI Entry point
+
+```
+
+---
+
+## ⚙️ Installation & Setup
+
+This project uses **`uv`** for lightning-fast dependency management.
+
+1. **Clone the Repository:**
+```bash
+git clone https://github.com/your-username/airqo-pm25-pipeline.git
+cd airqo-pm25-pipeline
+
+```
+
+
+2. **Install Dependencies:**
+```bash
+uv sync
+
+```
+
+
+3. **Activate Environment:**
+* Linux/Mac
+```bash
+source .venv/bin/activate
+```
+* Windows
+```
+.venv\Scripts\activate
+
+```
+
+
+
+---
 
 ## 🚀 Usage
 
-### 1. Exploratory Data Analysis (EDA)
-EDA is decoupled from production logic. Run the notebook found in `notebooks/01_eda_and_prototyping.ipynb`.
-* Plots are automatically saved to `reports/figures/`.
+### 1️⃣ Training the Model
 
-### 2. Training the Model
-To train the model, evaluate performance, and log artifacts to MLflow:
+Train the pipeline, run cross-validation, and log results to MLflow:
+
 ```bash
 python main.py --mode train
 
 ```
 
-* **Artifacts:** Saved to `models/artifacts/final_pipeline.pkl`
-* **Logs:** Saved to `models/mlruns/`
+* **Artifacts:** Saved to `models/artifacts/final_pipeline.pkl`.
+* **Visuals:** Check `reports/figures/` for feature importance and regression fit plots.
 
-### 3. Inference (Prediction)
+### 2️⃣ Command Line Inference
 
-To generate predictions on the test set (or a custom file):
+Generate predictions for a new dataset via CLI:
 
 ```bash
-python main.py --mode predict
-# OR
-python main.py --mode predict --input data/raw/NewData.csv
+python main.py --mode predict --input data/raw/Test.csv
 
 ```
 
-* **Output:** Generated at `data/outputs/submission.csv` containing columns `(id, pm2_5)`.
+### 3️⃣ Interactive Web App
 
-## 🔧 Configuration
+Launch the Streamlit GUI for a user-friendly experience:
 
-Modify `src/config.py` to adjust:
-
-* Hyperparameters
-* Paths
-* Outlier thresholds
-* Feature selection
-
-## 📊 MLOps Features
-
-* **Pipelines:** Preprocessing and modeling are encapsulated in a single serializable object.
-* **Experiment Tracking:** MLflow logs params, metrics (RMSE, MAE, R2), and models.
-* **Type Hinting:** Full Python typing for robustness.
+```bash
+uv run python -m streamlit run app.py
 
 ```
 
-```
+---
+
+## 📊 Model Performance
+
+The pipeline supports multiple gradient boosting frameworks. By default, it uses **LightGBM** due to its speed and accuracy with satellite data. Performance metrics (RMSE, MAE, R²) are automatically logged and visualized after every training run.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+## 📝 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+**Built with ❤️ for a cleaner Africa.** 🌍💨

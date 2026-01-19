@@ -12,6 +12,7 @@ from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
 from src.config import Config
 from src.features.transformers import TimeFeatureExtractor, OutlierHandler
+from src.utils.plots import save_regression_plot, save_feature_importance
 
 from lightgbm import LGBMRegressor
 from xgboost import XGBRegressor
@@ -101,14 +102,19 @@ def train_workflow(X: pd.DataFrame, y: pd.Series, folds: dict):
     with mlflow.start_run(run_name=Config.EXPERIMENT_NAME):
         
         # Evaluate
-        metrics = run_cross_validation(pipeline, X, y, folds)
-        
+        metrics, preds = run_cross_validation(pipeline, X, y, folds)
+
         # Log
         mlflow.log_params(pipeline.named_steps['regressor'].get_params())
         mlflow.log_metrics(metrics)
         
         #train the pipeline on the full dataset:
         pipeline.fit(X, y)
+
+        # saving plots:
+        save_feature_importance(pipeline, Config.MODEL,Config.FIGURES_DIR)
+        save_regression_plot(y, preds, Config.FIGURES_DIR)
+
         # Save Artifacts
         model_path = Config.MODEL_DIR / "final_pipeline.pkl"
         joblib.dump(pipeline, model_path)
@@ -121,18 +127,35 @@ def train_workflow(X: pd.DataFrame, y: pd.Series, folds: dict):
 def run_cross_validation(pipeline, X, y, folds):
     all_metrics = []
     val_weights = []
-
-    for fold, (train_idx, val_idx) in folds.items():
-        X_train, X_test = X.iloc[train_idx,:], X.iloc[val_idx, :]
-        y_train, y_test = y.iloc[train_idx], y.iloc[val_idx]
-
-        pipeline.fit(X_train, y_train)
-        y_pred = pipeline.predict(X_test)
-        metrics = evaluate_metrics(y_pred=y_pred, y_true=y_test)
-        all_metrics.append(metrics)
-        val_weights.append(len(val_idx))
     
-    all_metrics = np.average(pd.DataFrame(all_metrics), axis=0, weights=val_weights)
-    return {
-        key:all_metrics[i] for key, i in zip(metrics.keys(), range(len(all_metrics)))
-    }
+    # FIX: Initialize with zeros
+    preds = np.zeros(len(y))
+    preds_counts = np.zeros(len(y)) 
+
+    for fold_id, (train_idx, val_idx) in folds.items():
+        X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
+        y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
+
+        # Fit and predict
+        pipeline.fit(X_train, y_train)
+        y_pred = pipeline.predict(X_val)
+        
+        # Calculate metrics for this specific fold
+        fold_metrics = evaluate_metrics(y_true=y_val, y_pred=y_pred)
+        all_metrics.append(fold_metrics)
+        val_weights.append(len(val_idx))
+        
+        # Accumulate predictions and increment counts
+        preds[val_idx] += y_pred
+        preds_counts[val_idx] += 1
+
+    # Weighted average of metrics across folds
+    avg_metrics = np.average(pd.DataFrame(all_metrics), axis=0, weights=val_weights)
+    metrics_dict = {key: avg_metrics[i] for i, key in enumerate(all_metrics[0].keys())}
+
+    # FIX: Avoid division by zero for samples never seen in validation
+    # If a sample was never in validation, counts will be 0. 
+    # We use np.where to keep them as 0 instead of NaN.
+    final_preds = np.divide(preds, preds_counts, out=np.zeros_like(preds), where=preds_counts != 0)
+    
+    return metrics_dict, final_preds

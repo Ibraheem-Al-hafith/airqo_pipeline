@@ -10,6 +10,7 @@ class Config:
     TEST_DATA_PATH = DATA_DIR / "raw" / "Test.csv"
     MODEL_DIR = BASE_DIR / "models" / "artifacts"
     MLFLOW_URI = f"file://{BASE_DIR / 'models' / 'mlruns'}"
+    FIGURES_DIR = BASE_DIR / "reports" / "figures"
 
     #Experiment configs:
     EXPERIMENT_NAME: str = "lightgbm"
@@ -21,7 +22,7 @@ class Config:
     DATE_COL = "date"
     
     # Outlier Handling
-    OUTLIER_QUANTILE = 0.98
+    OUTLIER_QUANTILE = 0.02
     MISSING_THRESH = 60.0  # Percent
     
     # Model Config
@@ -33,4 +34,5 @@ class Config:
     TIME_FEATURES: List[str] = ["month", "week", "day_of_week", "hour"]
 
 os.makedirs(Config.MODEL_DIR, exist_ok=True)
+os.makedirs(Config.FIGURES_DIR, exist_ok=True)
 os.makedirs(Config.DATA_DIR / "outputs", exist_ok=True)

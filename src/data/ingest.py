@@ -16,10 +16,12 @@ def load_data(path: str|Path) -> pd.DataFrame:
         raise FileNotFoundError(f"❌ File not found at {path}")
 
 def clean_target_outliers(df: pd.DataFrame) -> pd.DataFrame:
-    """Removes rows where target is above 98th percentile (Specific to AirQo pipeline)."""
-    thresh = df[Config.TARGET].quantile(Config.OUTLIER_QUANTILE)
+    """Removes rows where target is above threshould percentile (Specific to AirQo pipeline)."""
+    upper, lower = df[Config.TARGET].quantile(1 - Config.OUTLIER_QUANTILE), df[Config.TARGET].quantile(Config.OUTLIER_QUANTILE)
     initial_len = len(df)
-    df_clean = df[df[Config.TARGET] <= thresh].reset_index(drop=True)
+    df_clean = df.copy()
+    # df_clean[Config.TARGET] = np.clip(df[Config.TARGET].values, lower, upper)
+    df_clean = df[(df[Config.TARGET] > lower ) & (df[Config.TARGET]< upper)].reset_index(drop=True)
     print(f"🧹 Removed {initial_len - len(df_clean)} target outliers.")
     return df_clean
 
