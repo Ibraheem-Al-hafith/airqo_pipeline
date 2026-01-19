@@ -2,7 +2,8 @@ import joblib
 import pandas as pd
 from src.config import Config
 
-def make_predictions(input_file: str = None) -> pd.DataFrame:
+
+def make_predictions(input_file: str = "") -> pd.DataFrame:
     """
     Loads model, predicts on input_file, returns formatted DataFrame (id, target).
     """
