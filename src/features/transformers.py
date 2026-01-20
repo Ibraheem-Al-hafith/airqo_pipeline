@@ -7,11 +7,14 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import RobustScaler, OneHotEncoder
 from typing import List
+import warnings
+from typing import Literal
+from ..config import Config
 
 # ==========================================
 # 1. FIXED CUSTOM TRANSFORMERS
 # ==========================================
-
+# --- 4.1 Time Feature Extractor ---
 class TimeFeatureExtractor(BaseEstimator, TransformerMixin):
     """Extracts temporal features and handles feature name propagation."""
     def __init__(self, date_col: str, features_to_extract: List[str] = None):
@@ -19,16 +22,13 @@ class TimeFeatureExtractor(BaseEstimator, TransformerMixin):
         self.features_to_extract = features_to_extract or ["month", "hour"]
 
     def fit(self, X: pd.DataFrame, y=None):
-        # Store names to satisfy sklearn validation
         self.feature_names_in_ = np.array(X.columns.tolist())
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X_out = X.copy()
-        # Convert to datetime
         X_out[self.date_col] = pd.to_datetime(X_out[self.date_col])
         
-        # Add new features
         if "month" in self.features_to_extract:
             X_out[f"{self.date_col}_month"] = X_out[self.date_col].dt.month
         if "hour" in self.features_to_extract:
@@ -38,29 +38,118 @@ class TimeFeatureExtractor(BaseEstimator, TransformerMixin):
         if "day_of_week" in self.features_to_extract:
             X_out[f"{self.date_col}_dow"] = X_out[self.date_col].dt.dayofweek
         
-        # Drop original date col
         return X_out.drop(columns=[self.date_col])
 
     def get_feature_names_out(self, input_features=None):
-        """Mandatory for pipelines to propagate names through ColumnTransformer."""
-        if input_features is None:
-            input_features = self.feature_names_in_
-        
-        # Current columns minus the dropped date column
+        if input_features is None: input_features = self.feature_names_in_
         features = [f for f in input_features if f != self.date_col]
-        
-        # Add the generated feature names
-        new_feats = []
-        if "month" in self.features_to_extract: new_feats.append(f"{self.date_col}_month")
-        if "hour" in self.features_to_extract: new_feats.append(f"{self.date_col}_hour")
-        if "week" in self.features_to_extract: new_feats.append(f"{self.date_col}_week")
-        if "day_of_week" in self.features_to_extract: new_feats.append(f"{self.date_col}_dow")
-        
+        new_feats = [f"{self.date_col}_{t}" for t in self.features_to_extract if t in ["month", "hour", "week", "day_of_week"]]
         return np.array(features + new_feats)
 
 
+# --- 4.2 High Missing Dropper ---
+class HighMissingDropper(BaseEstimator, TransformerMixin):
+    """Drops columns with missing percentage above a threshold."""
+    def __init__(self, threshold: float = 0.5):
+        self.threshold = threshold
+        self.drop_cols_ = []
+
+    def fit(self, X: pd.DataFrame, y=None):
+        # Calculate missing percentage per column
+        missing_frac = X.isnull().mean()
+        self.drop_cols_ = missing_frac[missing_frac > self.threshold].index.tolist()
+        print(f"\n🗑️ HighMissingDropper: Will drop {len(self.drop_cols_)} columns > {self.threshold*100}% missing.")
+        self.feature_names_in_ = np.array(X.columns.tolist())
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        # Drop identified columns
+        return X.drop(columns=self.drop_cols_, errors='ignore')
+
+    def get_feature_names_out(self, input_features=None):
+        if input_features is None: input_features = self.feature_names_in_
+        return np.array([f for f in input_features if f not in self.drop_cols_])
+
+
+# --- 4.3 Correlated Feature Aggregator ---
+class CorrelatedFeatureAggregator(BaseEstimator, TransformerMixin):
+    """
+    Automatically groups correlated features (> threshold) using a graph-based approach,
+    replaces them with their mean, and drops the originals.
+    """
+    def __init__(self, threshold: float = 0.85):
+        self.threshold = threshold
+        self.groups_ = {} # Maps new_name -> [list_of_cols]
+        self.drop_cols_ = []
+
+    def fit(self, X: pd.DataFrame, y=None):
+        self.feature_names_in_ = np.array(X.columns.tolist())
+        
+        # Only consider numeric columns for correlation
+        num_cols = X.select_dtypes(include=[np.number]).columns
+        
+        if len(num_cols) < 2:
+            return self
+
+        # 1. Compute Correlation Matrix
+        corr_matrix = X[num_cols].corr().abs()
+        
+        # 2. Find Connected Components (Groups)
+        # We treat features as nodes and high correlation as edges.
+        processed = set()
+        group_id = 1
+        
+        for col in num_cols:
+            if col in processed:
+                continue
+            
+            # Find all features connected to 'col' (including itself)
+            group = [col]
+            stack = [col]
+            processed.add(col)
+            
+            while stack:
+                current = stack.pop()
+                # Get neighbors with corr > threshold
+                neighbors = corr_matrix[current][corr_matrix[current] > self.threshold].index.tolist()
+                for neighbor in neighbors:
+                    if neighbor not in processed:
+                        processed.add(neighbor)
+                        stack.append(neighbor)
+                        group.append(neighbor)
+            
+            # If group has more than 1 feature, save it
+            if len(group) > 1:
+                new_name = f"agg_corr_group_{group_id}"
+                self.groups_[new_name] = group
+                self.drop_cols_.extend(group)
+                group_id += 1
+                
+        print(f"🔗 CorrelatedFeatureAggregator: Found {len(self.groups_)} groups to aggregate (Threshold: {self.threshold}).")
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        X_out = X.copy()
+        
+        # Create aggregated mean columns
+        for new_col, components in self.groups_.items():
+            # Compute mean row-wise
+            X_out[new_col] = X_out[components].mean(axis=1)
+            
+        # Drop original columns
+        return X_out.drop(columns=self.drop_cols_, errors='ignore')
+
+    def get_feature_names_out(self, input_features=None):
+        if input_features is None: input_features = self.feature_names_in_
+        # Remove dropped, add new
+        kept = [f for f in input_features if f not in self.drop_cols_]
+        new = list(self.groups_.keys())
+        return np.array(kept + new)
+
+
+# --- 4.4 Outlier Handler ---
 class OutlierHandler(BaseEstimator, TransformerMixin):
-    """Clips outliers and propagates feature names."""
+    """Clips outliers using IQR method."""
     def __init__(self, factor: float = 1.5):
         self.factor = factor
         self.lower_bounds_ = {}
@@ -86,73 +175,59 @@ class OutlierHandler(BaseEstimator, TransformerMixin):
         return X_out
 
     def get_feature_names_out(self, input_features=None):
-        if input_features is None:
-            return self.feature_names_in_
-        return np.array(input_features)
+        return self.feature_names_in_
 
-# ==========================================
-# 2. UPDATED PIPELINE CONSTRUCTION
-# ==========================================
+class SmartColumnDropper(BaseEstimator, TransformerMixin):
+    """
+    A transformer that safely drops or keeps columns based on a strategy.
+    
+    Parameters:
+    -----------
+    columns : List[str]
+        The list of columns to act upon.
+    strategy : 'drop' or 'keep', default='drop'
+        'drop': Removes the specified columns from the dataframe.
+        'keep': Keeps ONLY the specified columns, dropping everything else.
+    """
+    def __init__(self, columns: List[str], strategy: Literal['drop', 'keep'] = 'drop'):
+        self.columns = columns
+        self.strategy = strategy
+        self.feature_names_in_ = None
+        self.final_columns_ = None
 
-def build_pipeline(cat_cols: list, num_cols: list, date_col: str, model_obj) -> Pipeline:
-    # 1. Feature Engineering (Handles the raw input)
-    feature_engineering = Pipeline([
-        ('time_extractor', TimeFeatureExtractor(date_col=date_col)),
-        ('outlier_clipper', OutlierHandler(factor=1.5))
-    ])
-    
-    # 2. Preprocessing (Note: Names here will be prefixed by 'num__' or 'cat__')
-    numeric_transformer = Pipeline([
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', RobustScaler())
-    ])
-    
-    categorical_transformer = Pipeline([
-        ('imputer', SimpleImputer(strategy='most_frequent')),
-        ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
-    ])
-    
-    preprocessor = ColumnTransformer(transformers=[
-        ('num', numeric_transformer, num_cols),
-        ('cat', categorical_transformer, cat_cols)
-    ])
-    
-    # 3. Final Pipeline
-    pipeline = Pipeline([
-        ('feature_eng', feature_engineering),
-        ('preprocessor', preprocessor),
-        ('regressor', model_obj)
-    ])
-    
-    return pipeline
+    def fit(self, X: pd.DataFrame, y=None):
+        self.feature_names_in_ = np.array(X.columns.tolist())
+        
+        if self.strategy == 'drop':
+            # Check for columns requested to drop that aren't there
+            missing_cols = [c for c in self.columns if c not in X.columns]
+            if missing_cols:
+                warnings.warn(
+                    f"⚠️ SmartColumnDropper (drop): Columns not found to drop: {missing_cols}"
+                )
+            self.final_columns_ = [c for c in X.columns if c not in self.columns]
+            
+        elif self.strategy == 'keep':
+            # Check for columns requested to keep that aren't there
+            missing_cols = [c for c in self.columns if c not in X.columns]
+            if missing_cols:
+                warnings.warn(
+                    f"⚠️ SmartColumnDropper (keep): Columns requested to keep but missing from input: {missing_cols}"
+                )
+            # We can only keep what actually exists
+            self.final_columns_ = [c for c in self.columns if c in X.columns]
+            
+        else:
+            raise ValueError("Strategy must be either 'drop' or 'keep'.")
+            
+        return self
 
-# ==========================================
-# 3. VALIDATION TEST
-# ==========================================
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        # Use the columns identified during fit
+        return X[self.final_columns_].copy()
 
-if __name__ == "__main__":
-    from sklearn.ensemble import RandomForestRegressor
-    
-    # Mock Data
-    data = pd.DataFrame({
-        'timestamp': ['2023-01-01 10:00:00', '2023-01-01 11:00:00'],
-        'temp': [25.5, 30.0],
-        'city': ['Nairobi', 'Kampala']
-    })
-    y = np.array([100, 110])
-
-    # Config
-    DATE_COL = 'timestamp'
-    NUM_COLS = ['temp', 'timestamp_month', 'timestamp_hour'] # Features after extraction
-    CAT_COLS = ['city']
-
-    # Build and Fit
-    pipe = build_pipeline(CAT_COLS, NUM_COLS, DATE_COL, RandomForestRegressor())
-    pipe.fit(data, y)
-
-    # TEST: Extracting feature names
-    # Slice the pipeline to get all steps EXCEPT the regressor
-    features_out = pipe[:-1].get_feature_names_out()
-    
-    print("✅ Successfully extracted feature names:")
-    print(features_out)
+    def get_feature_names_out(self, input_features=None):
+        """
+        Returns the names of the features that remain after the transformation.
+        """
+        return np.array(self.final_columns_)

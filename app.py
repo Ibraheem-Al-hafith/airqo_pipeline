@@ -203,7 +203,7 @@ def main() -> None:
                 submission = pd.read_csv(Config.DATA_DIR / "outputs" / "submission.csv")
                 csv_data = submission.to_csv(index=False).encode('utf-8')
                 
-                st.balloons() # Celebration!
+                # st.balloons() # Celebration!
                 st.download_button(
                     label="📥 Download Predictions.csv",
                     data=csv_data,

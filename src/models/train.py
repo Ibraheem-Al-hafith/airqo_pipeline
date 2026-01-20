@@ -11,31 +11,52 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
 from src.config import Config
-from src.features.transformers import TimeFeatureExtractor, OutlierHandler
+from src.features.transformers import TimeFeatureExtractor, OutlierHandler,SmartColumnDropper,CorrelatedFeatureAggregator,HighMissingDropper
 from src.utils.plots import save_regression_plot, save_feature_importance
 
-from lightgbm import LGBMRegressor
-from xgboost import XGBRegressor
-from catboost import CatBoostRegressor
 
-MODEL_MAPPER = {
-    "lgbm": LGBMRegressor(verbose = -1, random_state=Config.RANDOM_STATE),
-    "decision_tree": DecisionTreeRegressor(random_state=Config.RANDOM_STATE),
-    "random_forest": RandomForestRegressor(random_state=Config.RANDOM_STATE),
-    "xgboost": XGBRegressor(random_state = Config.RANDOM_STATE),
-    "catboost": CatBoostRegressor(random_state=Config.RANDOM_STATE, verbose=0)
-}
+def evaluate_metrics(y_true, y_pred):
+    return {
+        "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
+        "r2": r2_score(y_true, y_pred),
+        "mae": mean_absolute_error(y_true, y_pred)
+    }
+
+
 
 def build_pipeline(cat_cols: list, num_cols: list) -> Pipeline:
-    """Constructs the processing and modeling pipeline."""
+    """Constructs the full processing and modeling pipeline."""
     
-    # 1. Feature Engineering Steps
+    # Model Registry
+    from lightgbm import LGBMRegressor
+    from xgboost import XGBRegressor
+    from catboost import CatBoostRegressor
+    from sklearn.tree import DecisionTreeRegressor
+
+    MODELS = {
+        "lgbm": LGBMRegressor(verbose = -1, random_state=Config.RANDOM_STATE),
+        "decision_tree": DecisionTreeRegressor(random_state=Config.RANDOM_STATE),
+        "random_forest": RandomForestRegressor(random_state=Config.RANDOM_STATE),
+        "xgboost": XGBRegressor(random_state = Config.RANDOM_STATE),
+        "catboost": CatBoostRegressor(random_state=Config.RANDOM_STATE, verbose=0)
+    }
+
+    # 1. Feature Engineering (Applied sequentially)
+    # Note: These transformers handle dataframe input/output
     feature_engineering = Pipeline([
-        ('time_extractor', TimeFeatureExtractor(date_col=Config.DATE_COL)),
-        ('outlier_clipper', OutlierHandler(factor=1.5))
+        ("column_filterer", SmartColumnDropper(Config.DROP_COLS)),
+        ('corr_aggregator', CorrelatedFeatureAggregator(threshold=Config.CORRELATION_THRESH)),
+        ('missing_dropper', HighMissingDropper(threshold=Config.MISSING_THRESH)),
+        ('time_extractor', TimeFeatureExtractor(date_col=Config.DATE_COL, features_to_extract=Config.TIME_FEATURES)),
+        ('outlier_clipper', OutlierHandler(factor=1.5)),
     ])
     
-    # 2. Preprocessing for Column Types
+    # 2. Column Preprocessing (Handling missing values & scaling)
+    # NOTE: Since feature_engineering changes columns dynamically, we cannot rely on 
+    # fixed lists 'num_cols' passed at the start. 
+    # We must use 'make_column_selector' to select columns dynamically after feature engineering.
+    from sklearn.compose import make_column_selector
+
     numeric_transformer = Pipeline([
         ('imputer', SimpleImputer(strategy='median')),
         ('scaler', RobustScaler())
@@ -47,25 +68,19 @@ def build_pipeline(cat_cols: list, num_cols: list) -> Pipeline:
     ])
     
     preprocessor = ColumnTransformer(transformers=[
-        ('num', numeric_transformer, num_cols),
-        ('cat', categorical_transformer, cat_cols)
+        ('num', numeric_transformer, make_column_selector(dtype_include=np.number)),
+        ('cat', categorical_transformer, make_column_selector(dtype_include=object))
     ])
     
-    # 3. Final Pipeline
+    # 3. Final Assembly
     pipeline = Pipeline([
         ('feature_eng', feature_engineering),
         ('preprocessor', preprocessor),
-        ('regressor', MODEL_MAPPER[Config.MODEL])
+        ('regressor', MODELS[Config.MODEL_TYPE])
     ])
     
     return pipeline
 
-def evaluate_metrics(y_true, y_pred):
-    return {
-        "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
-        "r2": r2_score(y_true, y_pred),
-        "mae": mean_absolute_error(y_true, y_pred)
-    }
 
 def train_workflow(X: pd.DataFrame, y: pd.Series, folds: dict):
     """Executes the training workflow with MLflow tracking."""
@@ -112,13 +127,13 @@ def train_workflow(X: pd.DataFrame, y: pd.Series, folds: dict):
         pipeline.fit(X, y)
 
         # saving plots:
-        save_feature_importance(pipeline, Config.MODEL,Config.FIGURES_DIR)
+        save_feature_importance(pipeline, Config.MODEL_TYPE,Config.FIGURES_DIR)
         save_regression_plot(y, preds, Config.FIGURES_DIR)
 
         # Save Artifacts
         model_path = Config.MODEL_DIR / "final_pipeline.pkl"
         joblib.dump(pipeline, model_path)
-        mlflow.sklearn.log_model(pipeline, Config.MODEL)
+        mlflow.sklearn.log_model(pipeline, Config.MODEL_TYPE)
         
         print(f"✅ Training Complete. Metrics: {metrics}")
         print(f"💾 Model saved to {model_path}")
