@@ -127,6 +127,9 @@ Launch the web interface for non-technical stakeholders to upload data and visua
 uv run python -m streamlit run app.py
 
 ```
+---
+### 📺 Demo Video 📺 
+https://github.com/user-attachments/assets/c72174a2-800f-458c-9602-55dfaaf037df
 
 ---
 
