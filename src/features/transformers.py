@@ -10,6 +10,11 @@ from typing import List
 import warnings
 from typing import Literal
 from ..config import Config
+import pandas as pd
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.utils.validation import check_is_fitted
 
 # ==========================================
 # 1. FIXED CUSTOM TRANSFORMERS
@@ -231,3 +236,79 @@ class SmartColumnDropper(BaseEstimator, TransformerMixin):
         Returns the names of the features that remain after the transformation.
         """
         return np.array(self.final_columns_)
+import pandas as pd
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.utils.validation import check_is_fitted
+import pandas as pd
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.utils.validation import check_is_fitted
+
+class MultiColumnCountVectorizer(BaseEstimator, TransformerMixin):
+    def __init__(self, columns=None, drop_original=True, **vectorizer_params):
+        self.columns = columns
+        self.drop_original = drop_original
+        self.vectorizer_params = vectorizer_params
+        # State variables (should be reset in fit)
+        self.vectorizers_ = {}
+        self.feature_names_out_ = None
+        self.n_features_in_ = None
+
+    def fit(self, X, y=None):
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+        
+        self.n_features_in_ = X.shape[1]
+        self.columns_to_process = self.columns if self.columns is not None else X.columns
+        
+        # FIX: Reset these every time fit is called to avoid appending to old runs
+        self.vectorizers_ = {} 
+        new_feature_names = []
+        
+        # Track which columns remain if we don't drop
+        current_cols = [c for c in X.columns if c not in self.columns_to_process] if self.drop_original else list(X.columns)
+
+        for col in self.columns_to_process:
+            vec = CountVectorizer(**self.vectorizer_params)
+            vec.fit(X[col].astype(str).fillna(''))
+            self.vectorizers_[col] = vec
+            
+            names = [f"{col}_{name}" for name in vec.get_feature_names_out()]
+            new_feature_names.extend(names)
+            
+        self.feature_names_out_ = np.array(current_cols + new_feature_names)
+        return self
+
+    def transform(self, X):
+        check_is_fitted(self)
+        X_df = X if isinstance(X, pd.DataFrame) else pd.DataFrame(X)
+        
+        all_results = []
+        
+        # Keep columns that weren't vectorized
+        if self.drop_original:
+            all_results.append(X_df.drop(columns=self.columns_to_process))
+        else:
+            all_results.append(X_df)
+
+        for col, vec in self.vectorizers_.items():
+            transformed = vec.transform(X_df[col].astype(str).fillna(''))
+            names = [f"{col}_{name}" for name in vec.get_feature_names_out()]
+            
+            # Use sparse matrices where possible, or converted to dense for DF
+            feature_df = pd.DataFrame(
+                transformed.toarray(), 
+                index=X_df.index, 
+                columns=names
+            )
+            all_results.append(feature_df)
+            
+        # Optimization: One single concat is MUCH faster than concat in a loop
+        return pd.concat(all_results, axis=1)
+
+    def get_feature_names_out(self, input_features=None):
+        check_is_fitted(self)
+        return self.feature_names_out_

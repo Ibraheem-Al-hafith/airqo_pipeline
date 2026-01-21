@@ -1,65 +1,70 @@
-# 🌍 AirQo PM2.5 Prediction: Production ML Pipeline
 
-A professional, modular, and production-ready machine learning pipeline designed to forecast **Particulate Matter (PM2.5)** concentrations across African cities using satellite-derived observations (AOD).
 
+# 🌱 AgriYield: Production-Grade Crop Yield Estimation
+
+**A modular, robust MLOps pipeline designed to predict crop yields by analyzing agricultural practices, temporal planting data, and environmental factors.**
 
 ---
 
-<img src = 'assets/logo.png'>
+<div align="center">
+<img src="assets/logo.png">
+
+</div>
 
 ---
 
 ## 🎯 Project Overview
 
-Air pollution is a critical environmental health risk in sub-Saharan Africa. This project implements a robust MLOps workflow to close the climate data gap by leveraging satellite data and high-performance regression models.
+Accurate crop yield estimation is vital for food security, supply chain planning, and farmer economic stability. This project transitions from standard analysis to a **production-ready Machine Learning pipeline**. It ingests raw agricultural survey data, applies graph-based feature reduction, processes complex temporal cropping patterns, and deploys high-performance Gradient Boosting models to forecast yield.
 
-### ✨ Key Features
+### 🚀 Key Capabilities
 
-* **🏗️ Modular Architecture**: Clean separation between data ingestion, feature engineering, training, and inference.
-* **🧪 Experiment Tracking**: Full integration with **MLflow** to log parameters, metrics, and models.
-* **📉 Custom Transformers**: Advanced feature engineering including `TimeFeatureExtractor` and `OutlierHandler` with full Scikit-Learn pipeline compatibility.
-* **🚀 One-Click Inference**: A sleek **Streamlit GUI** for end-users to upload data and download predictions.
-* **🛡️ Robust Validation**: Custom City-based Cross-Validation to ensure spatial generalization.
-
----
+* **🧠 Intelligent Feature Engineering**:
+* **Graph-Based Correlation Removal**: Automatically builds feature graphs to detect and aggregate highly correlated numerical features, reducing multicollinearity.
+* **Smart Column Dropping**: Dynamically filters columns based on high cardinality or missing data thresholds (>50%).
+* **Multi-Column Vectorization**: Custom transformer to handle complex categorical descriptions (e.g., `LandPreparationMethod`, `CropEstMethod`) using count vectorization.
 
 
-### 🧰 Tech Stack & Tools 🛠️ 
-
-| Category | Tools & Technologies |
-| :--- | :--- |
-| **Core** | ![Python](https://img.shields.io/badge/-Python-3776AB?style=flat-square&logo=python&logoColor=white) |
-| **Data Processing** | ![Pandas](https://img.shields.io/badge/-Pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![NumPy](https://img.shields.io/badge/-NumPy-013243?style=flat-square&logo=numpy) |
-| **Machine Learning** | ![ScikitLearn](https://img.shields.io/badge/-Scikit--Learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white) |
-| **Experiment Tracking** | ![MLflow](https://img.shields.io/badge/-MLflow-0194E2?style=flat-square&logo=mlflow&logoColor=white) |
-| **Visualization** | ![Matplotlib](https://img.shields.io/badge/-Matplotlib-11557C?style=flat-square&logo=python&logoColor=white) ![Seaborn](https://img.shields.io/badge/-Seaborn-4C72B0?style=flat-square&logo=python&logoColor=white) |
-| **Web App** | ![Streamlit](https://img.shields.io/badge/-Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white) |
-| **CLI & Utilities** | ![Argparse](https://img.shields.io/badge/-Argparse-3776AB?style=flat-square&logo=python&logoColor=white) |
-
+* **🏗️ Modular Architecture**: strict separation of concerns—Config, Data Ingestion, Feature Extraction, and Modeling are decoupled for scalability.
+* **⏱️ Temporal Intelligence**: Specialized `TimeFeatureExtractor` that parses critical agricultural dates (`CropTillageDate`, `Harv_date`, etc.) into seasonal features.
+* **🛡️ Robust Validation**: Implements K-Fold Cross-Validation and outlier handling (IQR Clipping) to ensure the model generalizes well to unseen data.
+* **📊 Full Observability**: Integrated with **MLflow** to track every experiment, hyperparameter, and metric (RMSE, R², MAE).
 
 ---
 
-## 📂 Project Structure
+## 🛠️ Tech Stack
+
+| Domain | Technologies |
+| --- | --- |
+| **Core** | `Python 3.10+` |
+| **Data Processing** | `Pandas`, `NumPy` |
+| **Machine Learning** | `LightGBM` (Default), `XGBoost`, `CatBoost`, `Scikit-Learn` |
+| **Orchestration** | `Scikit-Learn Pipelines` (Custom Transformers) |
+| **Tracking & Ops** | `MLflow`, `Joblib` |
+| **Dependency Mgmt** | `uv` (Fast Python package installer) |
+
+---
+
+## 📂 Repository Structure
 
 ```bash
-airqo_pipeline/
-├── data/                   # Raw and output datasets
-│   ├── raw/          
-│   └── output/
+AgriYield_Pipeline/
+├── data/
+│   ├── raw/                # Input CSVs (Train.csv, Test.csv)
+│   └── outputs/            # Processed datasets
 ├── models/
-│   ├── artifacts/          # Serialized .pkl pipelines
+│   ├── artifacts/          # Serialized .pkl pipelines (Production ready)
 │   └── mlruns/             # MLflow local tracking database
-├── notebooks/              # Research and EDA notebooks
 ├── reports/
-│   └── figures/            # Automatically generated performance plots
-├── src/                    # Core source code
-│   ├── config.py           # Centralized configuration & Hyperparameters
-│   ├── data/               # Ingestion and cleaning logic
-│   ├── features/           # Custom Scikit-learn transformers
-│   ├── models/             # Training and evaluation workflows
-│   └── inference/          # Prediction scripts
-├── app.py                  # Streamlit Dashboard
-└── main.py                 # CLI Entry point
+│   └── figures/            # Automated Feature Importance & Regression Plots
+├── src/
+│   ├── config.py           # Central Control: Hyperparams, Column definitions
+│   ├── data/               # Ingestion & Target Cleaning logic
+│   ├── features/           # ⚡ The Engine: Custom Transformers (GraphCorr, TimeExtract)
+│   └── models/             # Training loop & Evaluation logic
+├── app.py                  # Streamlit Dashboard (Inference Interface)
+├── main.py                 # CLI Entry point
+└── README.md               # Project Documentation
 
 ```
 
@@ -67,64 +72,56 @@ airqo_pipeline/
 
 ## ⚙️ Installation & Setup
 
-This project uses **`uv`** for lightning-fast dependency management.
+This project utilizes **`uv`** for lightning-fast dependency resolution, ensuring a reproducible environment.
 
-1. **Clone the Repository:**
+1. **Clone the Repository**
 ```bash
-git clone https://github.com/Ibraheem-Al-hafith/airqo_pipeline.git
-cd airqo_pipeline
+git clone https://github.com/YourUsername/AgriYield_Pipeline.git
+cd AgriYield_Pipeline
 
 ```
 
 
-2. **Install Dependencies:**
+2. **Install Dependencies**
 ```bash
 uv sync
 
 ```
 
 
-3. **Activate Environment:**
-* Linux/Mac
-```bash
-source .venv/bin/activate
-```
-* Windows
-```
-.venv\Scripts\activate
-
-```
+3. **Activate Environment**
+* *Linux/Mac:* `source .venv/bin/activate`
+* *Windows:* `.venv\Scripts\activate`
 
 
 
 ---
 
-## 🚀 Usage
+## 🏃 Usage
 
-### 1️⃣ Training the Model
+### 1️⃣ Train the Model
 
-Train the pipeline, run cross-validation, and log results to MLflow:
+Run the full training pipeline. This will load data, engineer features, train the LightGBM regressor, and log results.
 
 ```bash
 python main.py --mode train
 
 ```
 
-* **Artifacts:** Saved to `models/artifacts/final_pipeline.pkl`.
-* **Visuals:** Check `reports/figures/` for feature importance and regression fit plots.
+> **Output:** The trained model is saved to `models/artifacts/final_pipeline.pkl`. Performance metrics are logged to MLflow.
 
-### 2️⃣ Command Line Inference
+### 2️⃣ Predict on New Data
 
-Generate predictions for a new dataset via CLI:
+Generate yield predictions for a test dataset.
 
 ```bash
 python main.py --mode predict --input data/raw/Test.csv
 
 ```
 
-### 3️⃣ Interactive Web App
+### 3️⃣ Interactive Dashboard
 
-Launch the Streamlit GUI for a user-friendly experience:
+Launch the web interface for non-technical stakeholders to upload data and visualize predictions.
 
 ```bash
 uv run python -m streamlit run app.py
@@ -132,26 +129,42 @@ uv run python -m streamlit run app.py
 ```
 
 ---
-## 📺 Demo Video 📺 :
 
-https://github.com/user-attachments/assets/a6be4afe-3c12-483f-a1b7-08e8922b6a0c
+## 🧠 The Pipeline Logic
+
+The raw data undergoes a rigorous transformation process defined in `src/features/transformers.py`:
+
+1. **Smart Filter**: Drops IDs and columns with >50% missing values.
+2. **Correlation Aggregation**: Features with >0.85 correlation are grouped; their mean is kept, and originals dropped to reduce noise.
+3. **Time Extraction**: Dates like `SeedingSowingTransplanting` are broken down into Month, Week, and Day to capture seasonal trends.
+4. **Vectorization**: Text columns (e.g., `NursDetFactor`) are vectorized to capture categorical nuances.
+5. **Robust Scaling**: Numeric data is scaled using RobustScaler to minimize the impact of remaining outliers.
+6. **Modeling**: The processed data is fed into a **LightGBM Regressor** optimized for speed and accuracy.
 
 ---
 
-## 📊 Model Performance
+## 📊 Performance & Visualization
 
-The pipeline supports multiple gradient boosting frameworks. By default, it uses **LightGBM** due to its speed and accuracy with satellite data. Performance metrics (RMSE, MAE, R²) are automatically logged and visualized after every training run.
+The pipeline automatically generates reports in `reports/figures/`:
+
+* **Feature Importance**: See exactly which agricultural factors (e.g., *Fertilizer usage*, *Tillage Date*) drive yield.
+* **Regression Plots**: Visual comparison of Predicted vs. Actual Yield.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions to improve agricultural forecasting!
+
+1. Fork the repo.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes.
+4. Open a Pull Request.
 
 ---
 
-## 📝 License
+## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License.
 
-**Built with ❤️ for a cleaner Africa.** 🌍💨
+**Built to empower farmers with data.** 🌾🚜

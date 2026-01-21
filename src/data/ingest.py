@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from typing import Tuple
 from src.config import Config
 from pathlib import Path
+from sklearn.model_selection import KFold
 
 def load_data(path: str|Path) -> pd.DataFrame:
     """Loads CSV data."""
@@ -32,7 +33,8 @@ def get_X_y_folds() -> Tuple[pd.DataFrame, pd.Series, dict]:
     # Basic cleaning
     df = clean_target_outliers(df)
     
-    folds = get_train_val_folds(df)
+    #folds = get_train_val_folds(df)
+    folds = {fold: (train_idx, val_idx) for fold, (train_idx, val_idx) in enumerate(KFold().split(df))}
 
     X = df.drop(columns=[Config.TARGET])
     y = df[Config.TARGET]

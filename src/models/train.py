@@ -11,7 +11,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
 from src.config import Config
-from src.features.transformers import TimeFeatureExtractor, OutlierHandler,SmartColumnDropper,CorrelatedFeatureAggregator,HighMissingDropper
+from src.features.transformers import TimeFeatureExtractor, OutlierHandler,SmartColumnDropper,CorrelatedFeatureAggregator,HighMissingDropper, MultiColumnCountVectorizer
 from src.utils.plots import save_regression_plot, save_feature_importance
 
 
@@ -43,12 +43,16 @@ def build_pipeline(cat_cols: list, num_cols: list) -> Pipeline:
 
     # 1. Feature Engineering (Applied sequentially)
     # Note: These transformers handle dataframe input/output
+    dates_pipeline = Pipeline([
+        (f'time_{col}', TimeFeatureExtractor(date_col=col)) for col in (Config.DATE_COL if isinstance(Config.DATE_COL, list) else [Config.DATE_COL])
+    ])
     feature_engineering = Pipeline([
         ("column_filterer", SmartColumnDropper(Config.DROP_COLS)),
         ('corr_aggregator', CorrelatedFeatureAggregator(threshold=Config.CORRELATION_THRESH)),
         ('missing_dropper', HighMissingDropper(threshold=Config.MISSING_THRESH)),
-        ('time_extractor', TimeFeatureExtractor(date_col=Config.DATE_COL, features_to_extract=Config.TIME_FEATURES)),
+        ('time_extractor', dates_pipeline),
         ('outlier_clipper', OutlierHandler(factor=1.5)),
+        ('vectorizer', MultiColumnCountVectorizer(columns=Config.VECTORIZE))
     ])
     
     # 2. Column Preprocessing (Handling missing values & scaling)

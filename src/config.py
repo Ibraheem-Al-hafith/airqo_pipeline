@@ -16,17 +16,18 @@ class Config:
     EXPERIMENT_NAME = "airqo_pm25_prediction"
     
     # --- Data Config ---
-    TARGET = "pm2_5"
-    ID_COL = "id"
+    TARGET = "Yield"
+    ID_COL = "ID"
     # Columns to drop (high cardinality or irrelevant for training)
-    DROP_COLS = ["id","site_id", "site_latitude", "site_longitude", "city", "country"]
-    DATE_COL = "date"
+    DROP_COLS = ["id","site_id", "site_latitude", "site_longitude", "city", "country", "ID"]
+    DATE_COL = ['CropTillageDate', 'RcNursEstDate', 'SeedingSowingTransplanting', 'Harv_date', 'Threshing_date']
+    VECTORIZE = ['LandPreparationMethod', 'CropEstMethod', 'NursDetFactor','TransDetFactor','CropbasalFerts',]
     
     # --- Hyperparameters ---
     OUTLIER_QUANTILE = 0.02
     RANDOM_STATE = 42
     MODEL_TYPE = 'lgbm'
-    TIME_FEATURES = ["month", "week", "day_of_week", "hour"]
+    TIME_FEATURES = ["month", "week", "day_of_week",'day']
     CORRELATION_THRESH = 0.85
     MISSING_THRESH = 0.5
 

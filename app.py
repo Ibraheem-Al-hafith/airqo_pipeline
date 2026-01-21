@@ -4,237 +4,216 @@ import numpy as np
 from src.config import Config
 from src.inference.predict import make_predictions
 
-data_example = {'id': {0: 'id_vjcx08sz91', 1: 'id_bkg215syli', 2: 'id_oui2pot3qd'},
- 'site_id': {0: '6531a46a89b3300013914a36',
-  1: '6531a46a89b3300013914a36',
-  2: '6531a46a89b3300013914a36'},
- 'site_latitude': {0: 6.53257, 1: 6.53257, 2: 6.53257},
- 'site_longitude': {0: 3.39936, 1: 3.39936, 2: 3.39936},
- 'city': {0: 'Lagos', 1: 'Lagos', 2: 'Lagos'},
- 'country': {0: 'Nigeria', 1: 'Nigeria', 2: 'Nigeria'},
- 'date': {0: '2023-10-25', 1: '2023-11-02', 2: '2023-11-03'},
- 'hour': {0: 13, 1: 12, 2: 13},
- 'sulphurdioxide_so2_column_number_density': {0: np.nan, 1: np.nan, 2: np.nan},
- 'sulphurdioxide_so2_column_number_density_amf': {0: np.nan, 1: np.nan, 2: np.nan},
- 'sulphurdioxide_so2_slant_column_number_density': {0: np.nan, 1: np.nan, 2: np.nan},
- 'sulphurdioxide_cloud_fraction': {0: np.nan, 1: np.nan, 2: np.nan},
- 'sulphurdioxide_sensor_azimuth_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'sulphurdioxide_sensor_zenith_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'sulphurdioxide_solar_azimuth_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'sulphurdioxide_solar_zenith_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'sulphurdioxide_so2_column_number_density_15km': {0: np.nan, 1: np.nan, 2: np.nan},
- 'month': {0: 10.0, 1: 11.0, 2: 11.0},
- 'carbonmonoxide_co_column_number_density': {0: np.nan,
-  1: 0.0454752769339527,
-  2: np.nan},
- 'carbonmonoxide_h2o_column_number_density': {0: np.nan,
-  1: 3771.027210467723,
-  2: np.nan},
- 'carbonmonoxide_cloud_height': {0: np.nan, 1: 3399.75684527907, 2: np.nan},
- 'carbonmonoxide_sensor_altitude': {0: np.nan, 1: 828569.6238062604, 2: np.nan},
- 'carbonmonoxide_sensor_azimuth_angle': {0: np.nan, 1: 69.24535082958508, 2: np.nan},
- 'carbonmonoxide_sensor_zenith_angle': {0: np.nan, 1: 59.1596946834736, 2: np.nan},
- 'carbonmonoxide_solar_azimuth_angle': {0: np.nan,
-  1: -143.37057538316276,
-  2: np.nan},
- 'carbonmonoxide_solar_zenith_angle': {0: np.nan, 1: 26.566997473264017, 2: np.nan},
- 'nitrogendioxide_no2_column_number_density': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_tropospheric_no2_column_number_density': {0: np.nan,
-  1: np.nan,
-  2: np.nan},
- 'nitrogendioxide_stratospheric_no2_column_number_density': {0: np.nan,
-  1: np.nan,
-  2: np.nan},
- 'nitrogendioxide_no2_slant_column_number_density': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_tropopause_pressure': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_absorbing_aerosol_index': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_cloud_fraction': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_sensor_altitude': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_sensor_azimuth_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_sensor_zenith_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_solar_azimuth_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'nitrogendioxide_solar_zenith_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'formaldehyde_tropospheric_hcho_column_number_density': {0: np.nan,
-  1: 0.000214044630411,
-  2: np.nan},
- 'formaldehyde_tropospheric_hcho_column_number_density_amf': {0: np.nan,
-  1: 1.4623903036117585,
-  2: np.nan},
- 'formaldehyde_hcho_slant_column_number_density': {0: np.nan,
-  1: 0.0002400214143563,
-  2: np.nan},
- 'formaldehyde_cloud_fraction': {0: np.nan, 1: 0.359149873256684, 2: np.nan},
- 'formaldehyde_solar_zenith_angle': {0: np.nan, 1: 26.525512695312504, 2: np.nan},
- 'formaldehyde_solar_azimuth_angle': {0: np.nan, 1: -143.48016357421875, 2: np.nan},
- 'formaldehyde_sensor_zenith_angle': {0: np.nan, 1: 59.220096588134766, 2: np.nan},
- 'formaldehyde_sensor_azimuth_angle': {0: np.nan, 1: 70.8759536743164, 2: np.nan},
- 'uvaerosolindex_absorbing_aerosol_index': {0: 0.0523008033633217,
-  1: -0.3152063488960272,
-  2: 1.0978158712387107},
- 'uvaerosolindex_sensor_altitude': {0: 828817.9374999763,
-  1: 828578.6250000016,
-  2: 828878.6875000016},
- 'uvaerosolindex_sensor_azimuth_angle': {0: -100.80514526367188,
-  1: 70.8759536743164,
-  2: -96.41194152832033},
- 'uvaerosolindex_sensor_zenith_angle': {0: 21.720518112182617,
-  1: 59.220096588134766,
-  2: 61.04500961303711},
- 'uvaerosolindex_solar_azimuth_angle': {0: -123.52379608154298,
-  1: -143.48016357421875,
-  2: -121.30712127685548},
- 'uvaerosolindex_solar_zenith_angle': {0: 33.74591445922852,
-  1: 26.525512695312504,
-  2: 41.89811325073242},
- 'ozone_o3_column_number_density': {0: 0.1220549121499026,
-  1: 0.116974785923958,
-  2: 0.1175593361258509},
- 'ozone_o3_column_number_density_amf': {0: 2.3014037609099685,
-  1: 3.049901723861701,
-  2: 3.248702764511115},
- 'ozone_o3_slant_column_number_density': {0: 0.2858027815818705,
-  1: 0.3622033298015601,
-  2: 0.3841677904129036},
- 'ozone_o3_effective_temperature': {0: 230.69375610350903,
-  1: 228.2601928710942,
-  2: 224.10246276855517},
- 'ozone_cloud_fraction': {0: 0.9060392379760482,
-  1: 0.3647132515907295,
-  2: 0.7541627883911148},
- 'ozone_sensor_azimuth_angle': {0: -100.80514526367188,
-  1: 70.8759536743164,
-  2: -96.41194152832033},
- 'ozone_sensor_zenith_angle': {0: 21.720518112182617,
-  1: 59.220096588134766,
-  2: 61.04500961303711},
- 'ozone_solar_azimuth_angle': {0: -123.52379608154298,
-  1: -143.48016357421875,
-  2: -121.30712127685548},
- 'ozone_solar_zenith_angle': {0: 33.74591445922852,
-  1: 26.525512695312504,
-  2: 41.89811325073242},
- 'uvaerosollayerheight_aerosol_height': {0: np.nan, 1: np.nan, 2: np.nan},
- 'uvaerosollayerheight_aerosol_pressure': {0: np.nan, 1: np.nan, 2: np.nan},
- 'uvaerosollayerheight_aerosol_optical_depth': {0: np.nan, 1: np.nan, 2: np.nan},
- 'uvaerosollayerheight_sensor_zenith_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'uvaerosollayerheight_sensor_azimuth_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'uvaerosollayerheight_solar_azimuth_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'uvaerosollayerheight_solar_zenith_angle': {0: np.nan, 1: np.nan, 2: np.nan},
- 'cloud_cloud_fraction': {0: np.nan, 1: np.nan, 2: 0.7563918871573639},
- 'cloud_cloud_top_pressure': {0: np.nan, 1: np.nan, 2: 45185.499589698775},
- 'cloud_cloud_top_height': {0: np.nan, 1: np.nan, 2: 6791.68288790298},
- 'cloud_cloud_base_pressure': {0: np.nan, 1: np.nan, 2: 51171.80248564955},
- 'cloud_cloud_base_height': {0: np.nan, 1: np.nan, 2: 5791.682829397136},
- 'cloud_cloud_optical_depth': {0: np.nan, 1: np.nan, 2: 11.816715046824454},
- 'cloud_surface_albedo': {0: np.nan, 1: np.nan, 2: 0.1927570952348716},
- 'cloud_sensor_azimuth_angle': {0: np.nan, 1: np.nan, 2: -96.41188990612474},
- 'cloud_sensor_zenith_angle': {0: np.nan, 1: np.nan, 2: 61.04512277641219},
- 'cloud_solar_azimuth_angle': {0: np.nan, 1: np.nan, 2: -121.30741441488706},
- 'cloud_solar_zenith_angle': {0: np.nan, 1: np.nan, 2: 41.89826925713596}
- }
+# ==========================================
+# 1. SAMPLE DATA SETUP
+# ==========================================
+# This dictionary matches the structure of your Crop Yield Training Data
+# Used for the "Data Guide" display in the app.
+DATA_EXAMPLE = {
+    'ID': {0: 'ID_GTFAC7PEVWQ9', 1: 'ID_TK40ARLSPOKS', 2: 'ID_1FJY2CRIMLZZ'},
+    'District': {0: 'Nalanda', 1: 'Nalanda', 2: 'Gaya'},
+    'Block': {0: 'Noorsarai', 1: 'Rajgir', 2: 'Gurua'},
+    'CultLand': {0: 45, 1: 26, 2: 10},
+    'CropCultLand': {0: 40, 1: 26, 2: 10},
+    'LandPreparationMethod': {
+        0: 'TractorPlough FourWheelTracRotavator',
+        1: 'WetTillagePuddling TractorPlough FourWheelTracRotavator',
+        2: 'TractorPlough FourWheelTracRotavator'
+    },
+    'CropTillageDate': {0: '2022-07-20', 1: '2022-07-18', 2: '2022-06-30'},
+    'CropTillageDepth': {0: 5, 1: 5, 2: 6},
+    'CropEstMethod': {0: 'Manual_PuddledRandom', 1: 'Manual_PuddledRandom', 2: 'Manual_PuddledRandom'},
+    'RcNursEstDate': {0: '2022-06-27', 1: '2022-06-20', 2: '2022-06-20'},
+    'SeedingSowingTransplanting': {0: '2022-07-21', 1: '2022-07-20', 2: '2022-08-13'},
+    'SeedlingsPerPit': {0: 2.0, 1: 2.0, 2: 2.0},
+    'NursDetFactor': {
+        0: 'CalendarDate IrrigWaterAvailability SeedAvailability',
+        1: 'CalendarDate PreMonsoonShowers IrrigWaterAvailability LabourAvailability SeedAvailability',
+        2: 'PreMonsoonShowers IrrigWaterAvailability LabourAvailability'
+    },
+    'TransDetFactor': {
+        0: 'CalendarDate SeedlingAge RainArrival IrrigWaterAvailability LaborAvailability',
+        1: 'CalendarDate SeedlingAge RainArrival IrrigWaterAvailability LaborAvailability',
+        2: 'SeedlingAge IrrigWaterAvailability LaborAvailability'
+    },
+    'TransplantingIrrigationHours': {0: 5.0, 1: 5.0, 2: 4.0},
+    'TransplantingIrrigationSource': {0: 'Boring', 1: 'Boring', 2: 'Boring'},
+    'TransplantingIrrigationPowerSource': {0: 'Electric', 1: 'Electric', 2: 'Electric'},
+    'TransIrriCost': {0: 200.0, 1: 125.0, 2: 80.0},
+    'StandingWater': {0: 2.0, 1: 3.0, 2: 2.0},
+    'OrgFertilizers': {0: np.nan, 1: np.nan, 2: 'Ganaura FYM'},
+    'Ganaura': {0: np.nan, 1: np.nan, 2: 1.0},
+    'CropOrgFYM': {0: np.nan, 1: np.nan, 2: 1.0},
+    'PCropSolidOrgFertAppMethod': {0: np.nan, 1: np.nan, 2: 'SoilApplied'},
+    'NoFertilizerAppln': {0: 2, 1: 2, 2: 2},
+    'CropbasalFerts': {0: 'Urea', 1: 'DAP Urea', 2: 'DAP'},
+    'BasalDAP': {0: np.nan, 1: 15.0, 2: 4.0},
+    'BasalUrea': {0: 20.0, 1: 10.0, 2: np.nan},
+    'MineralFertAppMethod': {0: 'Broadcasting', 1: 'Broadcasting', 2: 'SoilApplied'},
+    'FirstTopDressFert': {0: 'Urea', 1: 'Urea', 2: 'Urea'},
+    '1tdUrea': {0: 15.0, 1: 20.0, 2: 5.0},
+    '1appDaysUrea': {0: 18.0, 1: 39.0, 2: 65.0},
+    '2tdUrea': {0: np.nan, 1: np.nan, 2: np.nan},
+    '2appDaysUrea': {0: np.nan, 1: np.nan, 2: np.nan},
+    'MineralFertAppMethod.1': {0: 'Broadcasting', 1: 'Broadcasting', 2: 'RootApplication'},
+    'Harv_method': {0: 'machine', 1: 'hand', 2: 'hand'},
+    'Harv_date': {0: '2022-11-16', 1: '2022-11-25', 2: '2022-12-12'},
+    'Harv_hand_rent': {0: np.nan, 1: 3.0, 2: 480.0},
+    'Threshing_date': {0: '2022-11-16', 1: '2022-12-24', 2: '2023-01-11'},
+    'Threshing_method': {0: 'machine', 1: 'machine', 2: 'machine'},
+    'Residue_length': {0: 30, 1: 24, 2: 30},
+    'Residue_perc': {0: 40, 1: 10, 2: 10},
+    'Stubble_use': {0: 'plowed_in_soil', 1: 'plowed_in_soil', 2: 'plowed_in_soil'},
+    'Acre': {0: 0.3125, 1: 0.3125, 2: 0.1481481481481481}
+}
 
-# Page configuration for a professional look
+# ==========================================
+# 2. STREAMLIT CONFIGURATION
+# ==========================================
 st.set_page_config(
-    page_title="AirQo Predictor",
-    page_icon="🌍",
-    layout="wide"
+    page_title="AgriYield Predictor",
+    page_icon="🌾",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-
 def main() -> None:
+    """
+    Main execution function for the Streamlit application.
+    Handles UI layout, File Ingestion, and Model Inference execution.
+    """
+    
     # --- SIDEBAR ---
     with st.sidebar:
-        st.image("assets/app_logo.png") # Assuming AirQo logo URL
-        st.title("⚙️ Settings & Info")
-        st.info(f"**Current Model:** {Config.MODEL.upper()}")
+        # Note: Ensure 'assets/logo.png' exists, or remove this line
+        try:
+            st.image("assets/app_logo.png", use_container_width=True) 
+        except:
+            st.warning("Logo not found at assets/app_logo.png")
+            
+        st.title("⚙️ System Control")
+        st.info(f"**Current Model:** {Config.MODEL_TYPE.upper()}")
+        
         st.write("---")
         st.markdown("""
         ### 🧪 Methodology
-        This pipeline uses satellite observations (AOD) to estimate ground-level air quality.
+        This pipeline leverages **Agritech Data** to forecast yield:
+        * 🚜 **Land Prep:** Tillage depth & methods.
+        * 🗓️ **Phenology:** Sowing & Harvest dates.
+        * 💧 **Irrigation:** Water source & timing.
+        * 🧪 **Fertilizers:** Urea/DAP application usage.
         """)
+        
+        st.write("---")
+        st.caption(f"Experiment: `{Config.EXPERIMENT_NAME}`")
 
     # --- HEADER ---
-    st.title("🌍 AirQo African Air Quality Prediction")
+    st.title("🌾 AgriYield: Crop Production Forecasting")
     st.markdown("""
-    Welcome to the **AirQo Inference Portal**! 💨  
-    This tool allows you to upload satellite data and generate high-accuracy air quality predictions in seconds.
+    **Optimize your harvest.** 🚜  
+    Upload your farm survey data below to generate precision yield estimates using our advanced Machine Learning pipeline.
     """)
 
     # --- SECTION 1: DATA GUIDE ---
     with st.expander("📖 View Required Data Format (CSV Structure)"):
-        st.write("Your uploaded file must match this structure:")
-        st.dataframe(pd.DataFrame(data_example).head(3))
-        st.caption("Note: Ensure all satellite density columns are present.")
+        st.write("To ensure accurate predictions, your CSV must match this schema:")
+        st.dataframe(pd.DataFrame(DATA_EXAMPLE).head(3), use_container_width=True)
+        st.caption("Note: Ensure date columns (e.g., CropTillageDate) are formatted correctly (YYYY-MM-DD).")
 
     st.divider()
 
     # --- SECTION 2: INFERENCE ---
-    st.subheader("📤 Step 1: Upload your Data")
-    uploaded_file = st.file_uploader("Drop your CSV file here", type="csv", help="Upload the satellite observation features.")
+    st.subheader("📤 Step 1: Upload Farm Data")
+    
+    uploaded_file = st.file_uploader(
+        "Drop your Survey CSV file here", 
+        type="csv", 
+        help="Upload the dataset containing District, Block, CultLand, and farming practice columns."
+    )
 
     if uploaded_file is not None:
         col_preview, col_action = st.columns([2, 1])
         
         with col_preview:
+            # Read and display
             df = pd.read_csv(uploaded_file)
-            st.success("✅ File uploaded successfully!")
-            st.write("🔍 **Data Preview:**")
-            st.dataframe(df.head(5), height=200)
+            st.success(f"✅ File `{uploaded_file.name}` uploaded successfully!")
+            st.write(f"🔍 **Data Preview** ({df.shape[0]} rows):")
+            st.dataframe(df.head(5), height=200, use_container_width=True)
 
         with col_action:
             st.write("🚀 **Action Zone**")
-            if st.button("✨ Generate Predictions"):
-                with st.status("🤖 AI is processing data...", expanded=True) as status:
-                    # Save temporary file
+            
+            # Predict Button
+            if st.button("✨ Generate Yield Estimates", type="primary", use_container_width=True):
+                with st.status("🤖 Analyzing agricultural patterns...", expanded=True) as status:
+                    
+                    # 1. Save temporary file for the pipeline to read
                     file_name = "user_input.csv"
                     file_dir = Config.TEST_DATA_PATH.parent / file_name
-                    if not Config.TEST_DATA_PATH.exists():
-                        Config.TEST_DATA_PATH.mkdir(parents=True)
+                    
+                    # Ensure directory exists
+                    if not Config.TEST_DATA_PATH.parent.exists():
+                        Config.TEST_DATA_PATH.parent.mkdir(parents=True)
+                        
                     df.to_csv(file_dir, index=False)
+                    st.write("📁 Input data staged.")
                     
-                    # Run Pipeline
-                    st.write("🔗 Loading Model Pipeline...")
-                    make_predictions(str(file_dir))
-                    st.write("📊 Finalizing submission format...")
-                    
-                    status.update(label="✅ Prediction Complete!", state="complete", expanded=False)
+                    # 2. Run Inference Pipeline
+                    st.write(f"🚜 Running `{Config.MODEL_TYPE}` regressor...")
+                    try:
+                        make_predictions(str(file_dir))
+                        st.write("📊 Aggregating results...")
+                        status.update(label="✅ Prediction Complete!", state="complete", expanded=False)
+                        
+                    except Exception as e:
+                        status.update(label="❌ Error during inference", state="error")
+                        st.error(f"Pipeline failed: {e}")
+                        st.stop()
 
-                # Download Logic
-                submission = pd.read_csv(Config.DATA_DIR / "outputs" / "submission.csv")
-                csv_data = submission.to_csv(index=False).encode('utf-8')
-                
-                # st.balloons() # Celebration!
-                st.download_button(
-                    label="📥 Download Predictions.csv",
-                    data=csv_data,
-                    file_name="airqo_predictions.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
+                # 3. Download Logic
+                output_path = Config.DATA_DIR / "outputs" / "submission.csv"
+                if output_path.exists():
+                    submission = pd.read_csv(output_path)
+                    csv_data = submission.to_csv(index=False).encode('utf-8')
+                    
+                    st.success("Analysis ready for download.")
+                    st.download_button(
+                        label="📥 Download Yield_Predictions.csv",
+                        data=csv_data,
+                        file_name="agriyield_predictions.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
+                else:
+                    st.error("Prediction output file not found.")
 
     st.divider()
 
     # --- SECTION 3: VISUALS ---
-    st.subheader("📊 Step 2: Model Performance & Insights")
-    
+    st.subheader("📊 Step 2: Model Explainability")
+    st.markdown("Understanding the drivers behind the yield predictions.")
+
     # Create the side-by-side layout
     img_col1, img_col2 = st.columns(2)
     
     with img_col1:
         st.markdown("#### 🏆 Feature Importance")
-        importance_path = Config.FIGURES_DIR / f"{Config.MODEL}_importance.png"
+        importance_path = Config.FIGURES_DIR / f"{Config.MODEL_TYPE}_importance.png"
+        
         if importance_path.exists():
-            st.image(str(importance_path), caption="Which features influenced the model most?", use_container_width=True)
+            st.image(str(importance_path), caption="Top factors driving crop yield (e.g., Acreage, Fertilizers)", use_container_width=True)
         else:
-            st.warning("Feature importance plot not found.")
+            st.info("Feature importance plot is available after model training.")
 
     with img_col2:
-        st.markdown("#### 📈 Regression Fit")
+        st.markdown("#### 📈 Prediction Accuracy")
         fit_path = Config.FIGURES_DIR / "regression_fit.png"
+        
         if fit_path.exists():
-            st.image(str(fit_path), caption="Actual vs. Predicted Values", use_container_width=True)
+            st.image(str(fit_path), caption="Actual Yield vs. Predicted Yield Validation", use_container_width=True)
         else:
-            st.warning("Regression fit plot not found.")
+            st.info("Regression fit plot is available after model training.")
 
 if __name__ == "__main__":
     main()
